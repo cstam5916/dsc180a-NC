@@ -7,8 +7,8 @@ def create_sbm_dataset(
     num_graphs: int,
     num_nodes: int,
     num_communities: int,
-    p: float,
-    q: float,
+    a: float,
+    b: float,
     feature_dim: int = 8,
     seed: int = None
 ):
@@ -27,14 +27,13 @@ def create_sbm_dataset(
     if seed is not None:
         torch.manual_seed(seed)
 
-    a = (p * num_nodes) / np.log(num_nodes)
-    b = (q * num_nodes) / np.log(num_nodes)
-
+    # Verify exact recovery condition
     assert a >= 0 and b >= 0, "Parameters p,q do not satisfy the conditions"
+    assert abs(np.sqrt(a) - np.sqrt(b)) > np.sqrt(num_communities), \
+        "Parameters p,q do not satisfy exact recovery condition"
     
-    # # Verify exact recovery condition
-    # assert abs(np.sqrt(a) - np.sqrt(b)) > np.sqrt(num_communities), \
-    #     "Parameters p,q do not satisfy exact recovery condition"
+    p = (a * np.log(num_nodes)) / num_nodes
+    q = (b * np.log(num_nodes)) / num_nodes
     
     # Create edge probabilities matrix
     block_sizes = [num_nodes // num_communities] * num_communities
@@ -43,7 +42,7 @@ def create_sbm_dataset(
     
     # Generate dataset
     dataset = StochasticBlockModelDataset(
-        root='SBM/',  # Temporary directory to store the dataset
+        root='SSBM/',  # Temporary directory to store the dataset
         block_sizes=block_sizes,
         edge_probs=edge_probs,
         num_channels=feature_dim,
@@ -60,8 +59,8 @@ if __name__ == "__main__":
         num_graphs=1000,
         num_nodes=1000,
         num_communities=2,
-        p=0.025,
-        q=0.0017,
+        a=3.75,
+        b=0.25,
         feature_dim=8,
         seed=42
     )
@@ -71,8 +70,8 @@ if __name__ == "__main__":
         num_graphs=100,
         num_nodes=1000,
         num_communities=2,
-        p=0.025,
-        q=0.0017,
+        a=3.75,
+        b=0.25,
         feature_dim=8,
         seed=43
     )
